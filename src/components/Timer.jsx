@@ -184,14 +184,14 @@ export default function Timer({ accent, digital, zoom = 1 }) {
         {formatDisplay(displayMs)}
       </div>
       <div className="btn-row">
-        <button className="action-btn" style={{background:'#3b82f6',color:'#fff'}} onClick={openEdit}>타이머 수정</button>
-        <button className="action-btn" style={{background:'#d4a853',color:'#fff'}} onClick={handleReset}>재설정</button>
+        <button className="action-btn primary" onClick={openEdit}>타이머 수정</button>
+        <button className="action-btn secondary" onClick={handleReset}>재설정</button>
         {!running ? (
-          <button className="action-btn" style={{background:'#22c55e',color:'#fff'}} onClick={handleStart}>
+          <button className="action-btn primary" onClick={handleStart}>
             {started ? '계속' : '시작'}
           </button>
         ) : (
-          <button className="action-btn" style={{background:'#f97316',color:'#fff'}} onClick={handlePause}>일시정지</button>
+          <button className="action-btn danger" onClick={handlePause}>일시정지</button>
         )}
       </div>
 
