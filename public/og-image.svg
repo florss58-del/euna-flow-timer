@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#1a1a2e"/>
+  <text x="600" y="180" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="800" fill="#ffffff" letter-spacing="2">Euna Flow</text>
+  <text x="600" y="220" text-anchor="middle" font-family="sans-serif" font-size="20" fill="rgba(255,255,255,0.6)" letter-spacing="4">집중의 시간</text>
+  <text x="600" y="380" text-anchor="middle" font-family="Courier New,monospace" font-size="120" font-weight="700" fill="#e0e0e0" letter-spacing="8">05:00</text>
+  <rect x="450" y="410" width="300" height="6" rx="3" fill="#3b82f6"/>
+  <rect x="210" y="470" width="120" height="44" rx="12" fill="rgba(255,255,255,0.08)"/>
+  <text x="270" y="498" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#aaaaaa">⏱ 타이머</text>
+  <rect x="355" y="470" width="140" height="44" rx="12" fill="rgba(255,255,255,0.08)"/>
+  <text x="425" y="498" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#aaaaaa">🏁 스톱워치</text>
+  <rect x="520" y="470" width="120" height="44" rx="12" fill="rgba(255,255,255,0.08)"/>
+  <text x="580" y="498" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#aaaaaa">⏰ 자명종</text>
+  <rect x="665" y="470" width="120" height="44" rx="12" fill="rgba(255,255,255,0.08)"/>
+  <text x="725" y="498" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#aaaaaa">🕐 시계</text>
+</svg>
