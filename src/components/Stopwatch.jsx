@@ -59,15 +59,15 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
     <>
       <div className={`big-time${digital ? ' digital' : ' normal'}`} style={{ fontSize: `calc(96px * ${zoom})` }}>{formatTime(elapsed)}</div>
       <div className="btn-row">
-        {!running ? (
-          <button className="action-btn primary" onClick={handleStart}>시작</button>
-        ) : (
-          <button className="action-btn danger" onClick={handleStop}>정지</button>
-        )}
+        <button className="action-btn" style={{background:'#f97316',color:'#fff'}} onClick={handleReset}>재설정</button>
         {running && (
           <button className="action-btn primary" onClick={handleLap}>랩</button>
         )}
-        <button className="action-btn secondary" onClick={handleReset}>재설정</button>
+        {!running ? (
+          <button className="action-btn" style={{background:'#22c55e',color:'#fff'}} onClick={handleStart}>시작</button>
+        ) : (
+          <button className="action-btn" style={{background:'#ef4444',color:'#fff'}} onClick={handleStop}>정지</button>
+        )}
       </div>
       {laps.length > 0 && (
         <div className="lap-list">
