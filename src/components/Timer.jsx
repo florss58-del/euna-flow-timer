@@ -176,7 +176,7 @@ export default function Timer({ accent, digital, zoom = 1 }) {
 
   return (
     <div className="timer-page">
-      <h1 className="timer-title">타이머</h1>
+      <h1 className="timer-title" style={{ fontSize: `calc(28px * ${zoom})` }}>타이머</h1>
       <div
         className={`timer-display${digital ? ' digital' : ' normal'}${isWarning ? ' blink-warning' : ''}`}
         style={{ fontSize: `calc(clamp(80px, 18vw, 160px) * ${zoom})` }}

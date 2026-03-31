@@ -35,12 +35,12 @@ export default function Clock({ settings, accent, zoom = 1 }) {
 
   return (
     <>
-      <div className="clock-label">현재 시간</div>
+      <div className="clock-label" style={{ fontSize: `calc(20px * ${zoom})` }}>현재 시간</div>
       <div className="clock-time-row">
-        {settings.use12Hour && <span className="clock-ampm">{getAmPm()}</span>}
+        {settings.use12Hour && <span className="clock-ampm" style={{ fontSize: `calc(28px * ${zoom})` }}>{getAmPm()}</span>}
         <div className={`big-time${settings.digitalDisplay ? ' digital' : ' normal'}`} style={{ fontSize: `calc(96px * ${zoom})` }}>{formatClock()}</div>
       </div>
-      {settings.showDate && <div className="clock-date">{getDate()}</div>}
+      {settings.showDate && <div className="clock-date" style={{ fontSize: `calc(20px * ${zoom})` }}>{getDate()}</div>}
     </>
   )
 }
