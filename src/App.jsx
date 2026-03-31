@@ -113,6 +113,9 @@ export default function App() {
           .start{background:#22c55e}.pause{background:#f97316}.reset{background:#d4a853}
           .blink{animation:blink .8s ease-in-out infinite}
           @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+          .brand{position:absolute;top:8px;left:12px;display:flex;align-items:baseline;gap:6px}
+          .brand-main{font-size:12px;font-weight:800;color:rgba(255,255,255,0.5)}
+          .brand-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3)}
         `
         pipWindow.document.head.appendChild(style)
 
@@ -125,6 +128,7 @@ export default function App() {
         const container = pipWindow.document.createElement('div')
         container.className = 'mini'
         container.innerHTML = `
+          <div class="brand"><span class="brand-main">Euna Flow</span><span class="brand-sub">집중의 시간</span></div>
           <div class="label">타이머</div>
           <div class="time" id="display">00:00</div>
           <div class="controls">
@@ -276,7 +280,10 @@ body{font-family:'Pretendard',sans-serif;background:#1a1a2e;color:#fff;display:f
 .btn{border:none;border-radius:10px;padding:8px 24px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
 .btn:hover{opacity:0.85}.start{background:#22c55e}.pause{background:#f97316}.reset{background:#d4a853}
 .blink{animation:blink .8s ease-in-out infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-</style></head><body><div class="mini"><div class="label">타이머</div><div class="time" id="display">00:00</div>
+.brand{position:absolute;top:8px;left:12px;display:flex;align-items:baseline;gap:6px}
+.brand-main{font-size:12px;font-weight:800;color:rgba(255,255,255,0.5)}
+.brand-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3)}
+</style></head><body><div class="brand"><span class="brand-main">Euna Flow</span><span class="brand-sub">집중의 시간</span></div><div class="mini"><div class="label">타이머</div><div class="time" id="display">00:00</div>
 <div class="controls"><button class="btn reset" id="resetBtn">재설정</button><button class="btn start" id="toggleBtn">시작</button></div></div>
 <script>let tL=0,run=false,sta=false,iv=null,iM=5,iS=0;const d=document.getElementById('display'),tb=document.getElementById('toggleBtn'),rb=document.getElementById('resetBtn');
 function f(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
