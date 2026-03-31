@@ -302,6 +302,10 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
   if (isFullscreen) {
     return (
       <div className={`app-fullscreen${light ? ' light' : ''}`} style={style}>
+        <div className="fullscreen-brand">
+          <span className="fs-brand-main">Euna Flow</span>
+          <span className="fs-brand-sub">집중의 시간</span>
+        </div>
         <div className="fullscreen-controls">
           <button className="fs-ctrl-btn" onClick={handleZoomOut} title="축소">−</button>
           <button className="fs-ctrl-btn" onClick={handleZoomIn} title="확대">+</button>
