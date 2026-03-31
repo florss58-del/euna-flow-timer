@@ -128,8 +128,6 @@ export default function App() {
   const [zooms, setZooms] = useState(() => loadState('displayZooms', { alarm: 1, timer: 1, stopwatch: 1, clock: 1 }))
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  if (!unlocked) return <LockScreen onUnlock={() => setUnlocked(true)} />
-
   useEffect(() => {
     localStorage.setItem('activeTab', JSON.stringify(activeTab))
   }, [activeTab])
@@ -380,6 +378,8 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
   const light = settings.lightMode
   const zoom = zooms[activeTab] || 1
   const style = { '--accent-color': accent, '--display-zoom': zoom }
+
+  if (!unlocked) return <LockScreen onUnlock={() => setUnlocked(true)} />
 
   const tabs = [
     { id: 'alarm', label: '자명종', icon: '⏰' },
