@@ -41,35 +41,58 @@ function loadState(key, fallback) {
   }
 }
 
-const PASSCODE = '1004'
+const PASSCODE = '5857'
 
 function LockScreen({ onUnlock }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
+  const tryUnlock = (value) => {
+    if (value === PASSCODE) {
+      sessionStorage.setItem('unlocked', 'true')
+      onUnlock()
+    } else {
+      setError(true)
+      setTimeout(() => { setPin(''); setError(false) }, 1000)
+    }
+  }
 
   const handleInput = (num) => {
     if (pin.length < 4) {
       const next = pin + num
       setPin(next)
-      if (next.length === 4) {
-        if (next === PASSCODE) {
-          localStorage.setItem('unlocked', 'true')
-          onUnlock()
-        } else {
-          setError(true)
-          setTimeout(() => { setPin(''); setError(false) }, 1000)
-        }
-      }
+      if (next.length === 4) tryUnlock(next)
     }
+  }
+
+  const handleKeyInput = (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 4)
+    setPin(val)
+    if (val.length === 4) tryUnlock(val)
   }
 
   const handleDelete = () => setPin(prev => prev.slice(0, -1))
 
   return (
-    <div className="lock-screen">
+    <div className="lock-screen" onClick={() => inputRef.current?.focus()}>
       <div className="lock-box">
         <div className="lock-brand">Euna Flow</div>
         <div className="lock-sub">비밀번호를 입력하세요</div>
+        <input
+          ref={inputRef}
+          className="lock-input"
+          type="password"
+          inputMode="numeric"
+          maxLength={4}
+          value={pin}
+          onChange={handleKeyInput}
+          autoFocus
+        />
         <div className={`lock-dots${error ? ' shake' : ''}`}>
           {[0,1,2,3].map(i => (
             <div key={i} className={`lock-dot${i < pin.length ? ' filled' : ''}`} />
@@ -92,7 +115,7 @@ function LockScreen({ onUnlock }) {
 }
 
 export default function App() {
-  const [unlocked, setUnlocked] = useState(() => localStorage.getItem('unlocked') === 'true')
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('unlocked') === 'true')
   const [activeTab, setActiveTab] = useState(() => loadState('activeTab', 'timer'))
   const [settings, setSettings] = useState(() => loadState('settings', defaultSettings))
   const [settingsOpen, setSettingsOpen] = useState(false)

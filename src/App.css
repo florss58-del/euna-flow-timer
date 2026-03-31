@@ -1003,6 +1003,13 @@ body {
   letter-spacing: 1px;
 }
 
+.lock-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 .lock-dots {
   display: flex;
   gap: 16px;
