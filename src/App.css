@@ -457,6 +457,7 @@ body {
   letter-spacing: 2px;
   color: var(--accent-color, #3b82f6);
   text-shadow: 0 0 30px rgba(59,130,246,0.3);
+  margin-bottom: 16px;
   margin-bottom: 40px;
   user-select: none;
   transition: font-family 0.2s, letter-spacing 0.2s;
@@ -533,7 +534,7 @@ body {
   color: var(--accent-color, #3b82f6);
   opacity: 0.7;
   letter-spacing: 4px;
-  margin-bottom: 48px;
+  margin-bottom: 20px;
 }
 
 .timer-display {
@@ -541,7 +542,7 @@ body {
   font-weight: 700;
   color: var(--accent-color, #3b82f6);
   line-height: 1;
-  margin-bottom: 64px;
+  margin-bottom: 32px;
   user-select: none;
   text-shadow: 0 0 30px rgba(59,130,246,0.2);
   transition: font-family 0.2s, letter-spacing 0.2s, color 0.3s;
@@ -756,7 +757,7 @@ body {
   color: var(--accent-color, #3b82f6);
   opacity: 0.6;
   letter-spacing: 4px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   font-weight: 600;
 }
 
@@ -770,7 +771,7 @@ body {
   font-size: 20px;
   color: var(--accent-color, #3b82f6);
   opacity: 0.7;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 .clock-ampm {
