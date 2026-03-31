@@ -73,7 +73,10 @@ function LockScreen({ onUnlock }) {
   const handleKeyInput = (e) => {
     const val = e.target.value.replace(/\D/g, '').slice(0, 4)
     setPin(val)
-    if (val.length === 4) tryUnlock(val)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') tryUnlock(pin)
   }
 
   const handleDelete = () => setPin(prev => prev.slice(0, -1))
@@ -91,6 +94,7 @@ function LockScreen({ onUnlock }) {
           maxLength={4}
           value={pin}
           onChange={handleKeyInput}
+          onKeyDown={handleKeyDown}
           autoFocus
         />
         <div className={`lock-dots${error ? ' shake' : ''}`}>
