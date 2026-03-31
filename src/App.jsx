@@ -314,7 +314,7 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
         <div className="fullscreen-content">
           {activeTab === 'timer' && <Timer accent={accent} digital={settings.digitalDisplay} zoom={zoom} />}
           {activeTab === 'stopwatch' && <Stopwatch accent={accent} digital={settings.digitalDisplay} zoom={zoom} />}
-          {activeTab === 'alarm' && <Alarm accent={accent} />}
+          {activeTab === 'alarm' && <Alarm accent={accent} zoom={zoom} />}
           {activeTab === 'clock' && <Clock settings={settings} accent={accent} zoom={zoom} />}
         </div>
       </div>
@@ -384,7 +384,7 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
           </div>
           {activeTab === 'timer' && <Timer accent={accent} digital={settings.digitalDisplay} zoom={zoom} />}
           {activeTab === 'stopwatch' && <Stopwatch accent={accent} digital={settings.digitalDisplay} zoom={zoom} />}
-          {activeTab === 'alarm' && <Alarm accent={accent} />}
+          {activeTab === 'alarm' && <Alarm accent={accent} zoom={zoom} />}
           {activeTab === 'clock' && <Clock settings={settings} accent={accent} zoom={zoom} />}
         </div>
       </div>

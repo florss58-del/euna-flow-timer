@@ -9,7 +9,7 @@ function loadState(key, fallback) {
   }
 }
 
-export default function Alarm({ accent }) {
+export default function Alarm({ accent, zoom = 1 }) {
   const [alarms, setAlarms] = useState(() => loadState('alarms', []))
   const [newTime, setNewTime] = useState('07:00')
   const [ringing, setRinging] = useState(null)
@@ -79,8 +79,10 @@ export default function Alarm({ accent }) {
     clearInterval(alarmIntervalRef.current)
   }
 
+  const zoomStyle = { transform: `scale(${zoom})`, transformOrigin: 'top center' }
+
   return (
-    <>
+    <div style={zoomStyle}>
       <div className="alarm-add-row">
         <input
           className="alarm-time-input"
@@ -118,6 +120,6 @@ export default function Alarm({ accent }) {
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }
