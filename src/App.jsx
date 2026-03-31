@@ -76,7 +76,9 @@ function LockScreen({ onUnlock }) {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') tryUnlock(pin)
+    if (e.key === 'Enter') {
+      tryUnlock(inputRef.current?.value || '')
+    }
   }
 
   const handleDelete = () => setPin(prev => prev.slice(0, -1))
