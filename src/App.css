@@ -972,3 +972,100 @@ body {
   background: rgba(0,0,0,0.6);
   z-index: 199;
 }
+
+/* Lock Screen */
+.lock-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.lock-brand {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.lock-sub {
+  font-size: 14px;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.lock-dots {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0;
+}
+
+.lock-dots.shake {
+  animation: lockShake 0.4s ease-in-out;
+}
+
+@keyframes lockShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+  75% { transform: translateX(-6px); }
+}
+
+.lock-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  transition: all 0.15s;
+}
+
+.lock-dot.filled {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.lock-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.lock-key {
+  width: 64px;
+  height: 64px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.lock-key:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.lock-key:active {
+  background: rgba(255,255,255,0.25);
+}
+
+.lock-error {
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+}

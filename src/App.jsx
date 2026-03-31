@@ -41,12 +41,65 @@ function loadState(key, fallback) {
   }
 }
 
+const PASSCODE = '1004'
+
+function LockScreen({ onUnlock }) {
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState(false)
+
+  const handleInput = (num) => {
+    if (pin.length < 4) {
+      const next = pin + num
+      setPin(next)
+      if (next.length === 4) {
+        if (next === PASSCODE) {
+          localStorage.setItem('unlocked', 'true')
+          onUnlock()
+        } else {
+          setError(true)
+          setTimeout(() => { setPin(''); setError(false) }, 1000)
+        }
+      }
+    }
+  }
+
+  const handleDelete = () => setPin(prev => prev.slice(0, -1))
+
+  return (
+    <div className="lock-screen">
+      <div className="lock-box">
+        <div className="lock-brand">Euna Flow</div>
+        <div className="lock-sub">비밀번호를 입력하세요</div>
+        <div className={`lock-dots${error ? ' shake' : ''}`}>
+          {[0,1,2,3].map(i => (
+            <div key={i} className={`lock-dot${i < pin.length ? ' filled' : ''}`} />
+          ))}
+        </div>
+        <div className="lock-pad">
+          {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((n, i) => (
+            n === '' ? <div key={i} /> :
+            n === '⌫' ? (
+              <button key={i} className="lock-key" onClick={handleDelete}>⌫</button>
+            ) : (
+              <button key={i} className="lock-key" onClick={() => handleInput(String(n))}>{n}</button>
+            )
+          ))}
+        </div>
+        {error && <div className="lock-error">비밀번호가 틀렸습니다</div>}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  const [unlocked, setUnlocked] = useState(() => localStorage.getItem('unlocked') === 'true')
   const [activeTab, setActiveTab] = useState(() => loadState('activeTab', 'timer'))
   const [settings, setSettings] = useState(() => loadState('settings', defaultSettings))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [zooms, setZooms] = useState(() => loadState('displayZooms', { alarm: 1, timer: 1, stopwatch: 1, clock: 1 }))
   const [isFullscreen, setIsFullscreen] = useState(false)
+
+  if (!unlocked) return <LockScreen onUnlock={() => setUnlocked(true)} />
 
   useEffect(() => {
     localStorage.setItem('activeTab', JSON.stringify(activeTab))
