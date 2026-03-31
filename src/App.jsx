@@ -45,7 +45,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => loadState('activeTab', 'timer'))
   const [settings, setSettings] = useState(() => loadState('settings', defaultSettings))
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [zoom, setZoom] = useState(() => loadState('displayZoom', 1))
+  const [zooms, setZooms] = useState(() => loadState('displayZooms', { alarm: 1, timer: 1, stopwatch: 1, clock: 1 }))
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
@@ -57,8 +57,8 @@ export default function App() {
   }, [settings])
 
   useEffect(() => {
-    localStorage.setItem('displayZoom', JSON.stringify(zoom))
-  }, [zoom])
+    localStorage.setItem('displayZooms', JSON.stringify(zooms))
+  }, [zooms])
 
   useEffect(() => {
     const handleChange = () => setIsFullscreen(!!document.fullscreenElement)
@@ -70,8 +70,8 @@ export default function App() {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleZoomOut = () => setZoom(prev => Math.max(ZOOM_MIN, +(prev - ZOOM_STEP).toFixed(2)))
-  const handleZoomIn = () => setZoom(prev => Math.min(ZOOM_MAX, +(prev + ZOOM_STEP).toFixed(2)))
+  const handleZoomOut = () => setZooms(prev => ({ ...prev, [activeTab]: Math.max(ZOOM_MIN, +(prev[activeTab] - ZOOM_STEP).toFixed(2)) }))
+  const handleZoomIn = () => setZooms(prev => ({ ...prev, [activeTab]: Math.min(ZOOM_MAX, +(prev[activeTab] + ZOOM_STEP).toFixed(2)) }))
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -289,6 +289,7 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
 
   const accent = COLORS[settings.accentColor] || COLORS.blue
   const light = settings.lightMode
+  const zoom = zooms[activeTab] || 1
   const style = { '--accent-color': accent, '--display-zoom': zoom }
 
   const tabs = [
