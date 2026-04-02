@@ -42,7 +42,13 @@ function loadState(key, fallback) {
   }
 }
 
-const PASSCODE = '5857'
+const PASSCODE_HASH = '56b946435788e7c6f9b7802eb17f513f1eedecddfbc2b5e5eca5fc7db5f5f340'
+
+async function hashPin(pin) {
+  const data = new TextEncoder().encode(pin)
+  const buf = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 function LockScreen({ onUnlock }) {
   const [pin, setPin] = useState('')
@@ -53,8 +59,9 @@ function LockScreen({ onUnlock }) {
     inputRef.current?.focus()
   }, [])
 
-  const tryUnlock = (value) => {
-    if (value === PASSCODE) {
+  const tryUnlock = async (value) => {
+    const hashed = await hashPin(value)
+    if (hashed === PASSCODE_HASH) {
       sessionStorage.setItem('unlocked', 'true')
       onUnlock()
     } else {
