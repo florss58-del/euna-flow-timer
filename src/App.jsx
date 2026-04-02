@@ -4,6 +4,7 @@ import Stopwatch from './components/Stopwatch'
 import Alarm from './components/Alarm'
 import Clock from './components/Clock'
 import Settings from './components/Settings'
+import { buildMiniContent, TAB_SIZES } from './miniWindow'
 
 const COLORS = {
   gray: '#6b7280',
@@ -157,216 +158,29 @@ export default function App() {
 
   const pipWindowRef = useRef(null)
 
-  const openMiniTimer = useCallback(async () => {
-    // Document PiP API - 항상 위에 고정
+  const openMiniWindow = useCallback(async () => {
+    const size = TAB_SIZES[activeTab]
+
     if ('documentPictureInPicture' in window) {
       try {
         const pipWindow = await window.documentPictureInPicture.requestWindow({
-          width: 300,
-          height: 220,
+          width: size.w, height: size.h,
         })
         pipWindowRef.current = pipWindow
-
-        const style = pipWindow.document.createElement('style')
-        style.textContent = `
-          *{margin:0;padding:0;box-sizing:border-box}
-          body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-          background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;
-          height:100vh;user-select:none;overflow:hidden}
-          .mini{display:flex;flex-direction:column;align-items:center;gap:8px}
-          .label{font-size:14px;color:#999;font-weight:700;letter-spacing:3px}
-          .time{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:56px;font-weight:700;
-          letter-spacing:4px;color:#e0e0e0;
-          background:linear-gradient(180deg,#e8e8e8 0%,#c0c0c0 100%);
-          -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-          background-clip:text}
-          .controls{display:flex;gap:10px;margin-top:4px}
-          .btn{border:none;border-radius:10px;padding:8px 24px;font-size:14px;font-weight:700;
-          cursor:pointer;color:#fff;transition:opacity 0.2s;letter-spacing:1px}
-          .btn:hover{opacity:0.85}
-          .start{background:#22c55e}.pause{background:#f97316}.reset{background:#d4a853}
-          .blink{animation:blink .8s ease-in-out infinite}
-          @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-          .brand{position:absolute;top:8px;left:12px;display:flex;align-items:baseline;gap:6px}
-          .brand-main{font-size:12px;font-weight:800;color:rgba(255,255,255,0.5)}
-          .brand-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3)}
-        `
-        pipWindow.document.head.appendChild(style)
-
-        // Pretendard 폰트 로드
-        const fontLink = pipWindow.document.createElement('link')
-        fontLink.rel = 'stylesheet'
-        fontLink.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'
-        pipWindow.document.head.appendChild(fontLink)
-
-        const container = pipWindow.document.createElement('div')
-        container.className = 'mini'
-        container.innerHTML = `
-          <div class="brand"><span class="brand-main">Euna Flow</span><span class="brand-sub">집중의 시간</span></div>
-          <div class="label">타이머</div>
-          <div class="time" id="display">00:00</div>
-          <div class="controls">
-            <button class="btn reset" id="resetBtn">재설정</button>
-            <button class="btn start" id="toggleBtn">시작</button>
-          </div>
-        `
-        pipWindow.document.body.appendChild(container)
-
-        const display = pipWindow.document.getElementById('display')
-        const toggleBtn = pipWindow.document.getElementById('toggleBtn')
-        const resetBtn = pipWindow.document.getElementById('resetBtn')
-
-        let timeLeft = 0, running = false, started = false, interval = null
-        let inputMin = 5, inputSec = 0
-        const bc = new BroadcastChannel('timer-sync')
-
-        const fmt = (ms) => {
-          const s = Math.floor(ms / 1000), m = Math.floor(s / 60)
-          return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
-        }
-
-        const sync = () => {
-          try {
-            timeLeft = JSON.parse(localStorage.getItem('timerTimeLeft') || '0')
-            started = JSON.parse(localStorage.getItem('timerStarted') || 'false')
-            inputMin = JSON.parse(localStorage.getItem('timerInputMin') || '5')
-            inputSec = JSON.parse(localStorage.getItem('timerInputSec') || '0')
-            const wasRunning = JSON.parse(localStorage.getItem('timerRunning') || 'false')
-            if (wasRunning && started && !running) {
-              running = true
-              interval = setInterval(tick, 10)
-            }
-            if (!wasRunning && running) {
-              running = false
-              clearInterval(interval)
-            }
-          } catch {}
-        }
-
-        const render = () => {
-          display.textContent = fmt(started ? timeLeft : (inputMin * 60 + inputSec) * 1000)
-          if (running && started && timeLeft > 0 && timeLeft <= 15000) {
-            display.classList.add('blink')
-          } else {
-            display.classList.remove('blink')
-          }
-          if (running) { toggleBtn.textContent = '일시정지'; toggleBtn.className = 'btn pause' }
-          else if (started) { toggleBtn.textContent = '계속'; toggleBtn.className = 'btn start' }
-          else { toggleBtn.textContent = '시작'; toggleBtn.className = 'btn start' }
-        }
-
-        const tick = () => {
-          if (timeLeft <= 10) {
-            running = false; started = false; timeLeft = 0
-            clearInterval(interval)
-            localStorage.setItem('timerTimeLeft', '0')
-            localStorage.setItem('timerStarted', 'false')
-            localStorage.setItem('timerRunning', 'false')
-            render(); return
-          }
-          timeLeft -= 10
-          localStorage.setItem('timerTimeLeft', JSON.stringify(timeLeft))
-          display.textContent = fmt(timeLeft)
-        }
-
-        const bcSend = (data) => { try { bc.postMessage(data) } catch {} }
-
-        toggleBtn.addEventListener('click', () => {
-          if (running) {
-            running = false; clearInterval(interval)
-            localStorage.setItem('timerRunning', 'false')
-          } else {
-            if (!started) {
-              timeLeft = (inputMin * 60 + inputSec) * 1000
-              if (timeLeft <= 0) return
-              started = true
-              localStorage.setItem('timerStarted', 'true')
-            }
-            running = true
-            interval = setInterval(tick, 10)
-            localStorage.setItem('timerRunning', 'true')
-          }
-          bcSend({ running, started, timeLeft, inputMin, inputSec })
-          render()
-        })
-
-        resetBtn.addEventListener('click', () => {
-          running = false; started = false; timeLeft = 0
-          clearInterval(interval)
-          localStorage.setItem('timerTimeLeft', '0')
-          localStorage.setItem('timerStarted', 'false')
-          localStorage.setItem('timerRunning', 'false')
-          bcSend({ running: false, started: false, timeLeft: 0, inputMin, inputSec })
-          render()
-        })
-
-        window.addEventListener('storage', (e) => {
-          if (e.key && e.key.startsWith('timer')) { sync(); render() }
-        })
-
-        // BroadcastChannel - 메인 창과 실시간 동기화
-        bc.onmessage = (e) => {
-          const d = e.data
-          if (d.timeLeft !== undefined) timeLeft = d.timeLeft
-          if (d.started !== undefined) started = d.started
-          if (d.inputMin !== undefined) inputMin = d.inputMin
-          if (d.inputSec !== undefined) inputSec = d.inputSec
-          if (d.running !== undefined) {
-            if (d.running && !running) {
-              running = true
-              clearInterval(interval)
-              interval = setInterval(tick, 10)
-            } else if (!d.running && running) {
-              running = false
-              clearInterval(interval)
-            }
-          }
-          render()
-        }
-
-        pipWindow.addEventListener('pagehide', () => {
-          clearInterval(interval)
-          bc.close()
-          pipWindowRef.current = null
-        })
-
-        sync(); render()
+        buildMiniContent(pipWindow, activeTab, pipWindowRef)
         return
       } catch (e) {
         console.log('PiP failed, fallback to popup', e)
       }
     }
 
-    // Fallback: 일반 팝업
-    const w = 300, h = 220
-    const left = window.screen.width - w - 20
-    const popup = window.open('', 'miniTimer',
-      `width=${w},height=${h},left=${left},top=20,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no,alwaysRaised=yes`)
+    // Fallback: 일반 팝업 (PiP 미지원 브라우저)
+    const left = window.screen.width - size.w - 20
+    const popup = window.open('', 'miniWindow',
+      `width=${size.w},height=${size.h},left=${left},top=20,resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`)
     if (!popup) return
-    popup.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mini Timer</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<style>*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Pretendard',sans-serif;background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden}
-.mini{display:flex;flex-direction:column;align-items:center;gap:8px}
-.label{font-size:14px;color:#999;font-weight:700;letter-spacing:3px}
-.time{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:56px;font-weight:700;letter-spacing:4px;color:#e0e0e0;background:linear-gradient(180deg,#e8e8e8,#c0c0c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.controls{display:flex;gap:10px;margin-top:4px}
-.btn{border:none;border-radius:10px;padding:8px 24px;font-size:14px;font-weight:700;cursor:pointer;color:#fff}
-.btn:hover{opacity:0.85}.start{background:#22c55e}.pause{background:#f97316}.reset{background:#d4a853}
-.blink{animation:blink .8s ease-in-out infinite}@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.brand{position:absolute;top:8px;left:12px;display:flex;align-items:baseline;gap:6px}
-.brand-main{font-size:12px;font-weight:800;color:rgba(255,255,255,0.5)}
-.brand-sub{font-size:9px;font-weight:600;color:rgba(255,255,255,0.3)}
-</style></head><body><div class="brand"><span class="brand-main">Euna Flow</span><span class="brand-sub">집중의 시간</span></div><div class="mini"><div class="label">타이머</div><div class="time" id="display">00:00</div>
-<div class="controls"><button class="btn reset" id="resetBtn">재설정</button><button class="btn start" id="toggleBtn">시작</button></div></div>
-<script>let tL=0,run=false,sta=false,iv=null,iM=5,iS=0;const d=document.getElementById('display'),tb=document.getElementById('toggleBtn'),rb=document.getElementById('resetBtn');
-function f(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function sy(){try{tL=JSON.parse(localStorage.getItem('timerTimeLeft')||'0');sta=JSON.parse(localStorage.getItem('timerStarted')||'false');iM=JSON.parse(localStorage.getItem('timerInputMin')||'5');iS=JSON.parse(localStorage.getItem('timerInputSec')||'0');var wr=JSON.parse(localStorage.getItem('timerRunning')||'false');if(wr&&sta&&!run){run=true;iv=setInterval(tk,10)}if(!wr&&run){run=false;clearInterval(iv)}}catch{}}
-function rn(){d.textContent=f(sta?tL:(iM*60+iS)*1000);if(run&&sta&&tL>0&&tL<=15000){d.classList.add('blink')}else{d.classList.remove('blink')}if(run){tb.textContent='일시정지';tb.className='btn pause'}else if(sta){tb.textContent='계속';tb.className='btn start'}else{tb.textContent='시작';tb.className='btn start'}}
-function tk(){if(tL<=10){run=false;sta=false;tL=0;clearInterval(iv);localStorage.setItem('timerTimeLeft','0');localStorage.setItem('timerStarted','false');localStorage.setItem('timerRunning','false');rn();return}tL-=10;localStorage.setItem('timerTimeLeft',JSON.stringify(tL));d.textContent=f(tL)}
-sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWith('timer')){sy();rn()}});var bc2=new BroadcastChannel('timer-sync');bc2.onmessage=function(e){var dd=e.data;if(dd.timeLeft!==undefined)tL=dd.timeLeft;if(dd.started!==undefined)sta=dd.started;if(dd.inputMin!==undefined)iM=dd.inputMin;if(dd.inputSec!==undefined)iS=dd.inputSec;if(dd.running!==undefined){if(dd.running&&!run){run=true;clearInterval(iv);iv=setInterval(tk,10)}else if(!dd.running&&run){run=false;clearInterval(iv)}}rn()};tb.onclick=function(){if(run){run=false;clearInterval(iv);localStorage.setItem('timerRunning','false');bc2.postMessage({running:false,started:sta,timeLeft:tL,inputMin:iM,inputSec:iS})}else{if(!sta){tL=(iM*60+iS)*1000;if(tL<=0)return;sta=true;localStorage.setItem('timerStarted','true')}run=true;iv=setInterval(tk,10);localStorage.setItem('timerRunning','true');bc2.postMessage({running:true,started:sta,timeLeft:tL,inputMin:iM,inputSec:iS})}rn()};rb.onclick=function(){run=false;sta=false;tL=0;clearInterval(iv);localStorage.setItem('timerTimeLeft','0');localStorage.setItem('timerStarted','false');localStorage.setItem('timerRunning','false');bc2.postMessage({running:false,started:false,timeLeft:0,inputMin:iM,inputSec:iS});rn()}<\/script></body></html>`)
-    popup.document.close()
-  }, [])
+    buildMiniContent(popup, activeTab, pipWindowRef)
+  }, [activeTab])
 
   const accent = COLORS[settings.accentColor] || COLORS.blue
   const light = settings.lightMode
@@ -451,7 +265,7 @@ sy();rn();window.addEventListener('storage',function(e){if(e.key&&e.key.startsWi
       <div className="main">
         <div className="content">
           <div className="content-controls">
-            <button className="content-ctrl-btn" onClick={openMiniTimer} title="미니 타이머 (항상 위)">
+            <button className="content-ctrl-btn" onClick={openMiniWindow} title="미니창 (항상 위)">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="1" y="1" width="14" height="10" rx="1.5" />
                 <rect x="8" y="6" width="7" height="5" rx="1" strokeWidth="1.5" fill="currentColor" opacity="0.3" />

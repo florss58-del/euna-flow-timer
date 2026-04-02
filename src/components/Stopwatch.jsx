@@ -22,6 +22,27 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
   const [running, setRunning] = useState(false)
   const [laps, setLaps] = useState(() => loadState('swLaps', []))
   const intervalRef = useRef(null)
+  const channelRef = useRef(null)
+  const skipRef = useRef(false)
+
+  // BroadcastChannel - PiP 창과 양방향 동기화
+  useEffect(() => {
+    channelRef.current = new BroadcastChannel('stopwatch-sync')
+    channelRef.current.onmessage = (e) => {
+      const d = e.data
+      skipRef.current = true
+      if (d.elapsed !== undefined) setElapsed(d.elapsed)
+      if (d.running !== undefined) setRunning(d.running)
+      if (d.laps !== undefined) setLaps(d.laps)
+      if (d.reset) { setElapsed(0); setRunning(false); setLaps([]) }
+      setTimeout(() => { skipRef.current = false }, 50)
+    }
+    return () => channelRef.current?.close()
+  }, [])
+
+  const broadcast = useCallback((data) => {
+    if (!skipRef.current) channelRef.current?.postMessage(data)
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('swElapsed', JSON.stringify(elapsed))
@@ -30,6 +51,23 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
   useEffect(() => {
     localStorage.setItem('swLaps', JSON.stringify(laps))
   }, [laps])
+
+  useEffect(() => {
+    localStorage.setItem('swRunning', JSON.stringify(running))
+    broadcast({ running, elapsed })
+  }, [running, broadcast])
+
+  // 외부 탭에서 localStorage 변경 시 동기화
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (!e.key || !e.key.startsWith('sw')) return
+      if (e.key === 'swElapsed') setElapsed(JSON.parse(e.newValue || '0'))
+      if (e.key === 'swRunning') setRunning(JSON.parse(e.newValue || 'false'))
+      if (e.key === 'swLaps') setLaps(JSON.parse(e.newValue || '[]'))
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   const tick = useCallback(() => {
     setElapsed(prev => prev + 10)
@@ -49,6 +87,7 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
     setRunning(false)
     setElapsed(0)
     setLaps([])
+    broadcast({ reset: true })
   }
 
   const handleLap = () => {
