@@ -42,88 +42,7 @@ function loadState(key, fallback) {
   }
 }
 
-const PASSCODE_HASH = '56b946435788e7c6f9b7802eb17f513f1eedecddfbc2b5e5eca5fc7db5f5f340'
-
-async function hashPin(pin) {
-  const data = new TextEncoder().encode(pin)
-  const buf = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-function LockScreen({ onUnlock }) {
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState(false)
-  const inputRef = useRef(null)
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  const tryUnlock = async (value) => {
-    const hashed = await hashPin(value)
-    if (hashed === PASSCODE_HASH) {
-      sessionStorage.setItem('unlocked', 'true')
-      onUnlock()
-    } else {
-      setError(true)
-      setTimeout(() => { setPin(''); setError(false) }, 1000)
-    }
-  }
-
-  const handleInput = (num) => {
-    if (pin.length < 4) {
-      const next = pin + num
-      setPin(next)
-      if (next.length === 4) tryUnlock(next)
-    }
-  }
-
-  const handleKeyInput = (e) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 4)
-    setPin(val)
-    if (val.length === 4) tryUnlock(val)
-  }
-
-  const handleDelete = () => setPin(prev => prev.slice(0, -1))
-
-  return (
-    <div className="lock-screen" onClick={() => inputRef.current?.focus()}>
-      <div className="lock-box">
-        <div className="lock-brand">Euna Flow</div>
-        <div className="lock-sub">비밀번호를 입력하세요</div>
-        <input
-          ref={inputRef}
-          className="lock-input"
-          type="password"
-          inputMode="numeric"
-          maxLength={4}
-          value={pin}
-          onChange={handleKeyInput}
-          autoFocus
-        />
-        <div className={`lock-dots${error ? ' shake' : ''}`}>
-          {[0,1,2,3].map(i => (
-            <div key={i} className={`lock-dot${i < pin.length ? ' filled' : ''}`} />
-          ))}
-        </div>
-        <div className="lock-pad">
-          {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((n, i) => (
-            n === '' ? <div key={i} /> :
-            n === '⌫' ? (
-              <button key={i} className="lock-key" onClick={handleDelete}>⌫</button>
-            ) : (
-              <button key={i} className="lock-key" onClick={() => handleInput(String(n))}>{n}</button>
-            )
-          ))}
-        </div>
-        {error && <div className="lock-error">비밀번호가 틀렸습니다</div>}
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('unlocked') === 'true')
   const [activeTab, setActiveTab] = useState(() => loadState('activeTab', 'timer'))
   const [settings, setSettings] = useState(() => loadState('settings', defaultSettings))
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -193,8 +112,6 @@ export default function App() {
   const light = settings.lightMode
   const zoom = zooms[activeTab] || 1
   const style = { '--accent-color': accent, '--display-zoom': zoom }
-
-  if (!unlocked) return <LockScreen onUnlock={() => setUnlocked(true)} />
 
   const tabs = [
     { id: 'alarm', label: '자명종', icon: '⏰' },

@@ -18,10 +18,15 @@ function formatTime(ms) {
 }
 
 export default function Stopwatch({ accent, digital, zoom = 1 }) {
-  const [elapsed, setElapsed] = useState(() => loadState('swElapsed', 0))
-  const [running, setRunning] = useState(false)
+  // base: 지난 구간들의 누적 시간. startAt: 지금 구간이 시작된 시각(epoch ms)
+  const [base, setBase] = useState(() => loadState('swElapsed', 0))
+  const [startAt, setStartAt] = useState(() => loadState('swStartAt', 0))
+  const [running, setRunning] = useState(() =>
+    loadState('swRunning', false) && loadState('swStartAt', 0) > 0
+  )
   const [laps, setLaps] = useState(() => loadState('swLaps', []))
-  const intervalRef = useRef(null)
+  const [, forceRender] = useState(0)
+  const rafRef = useRef(null)
   const channelRef = useRef(null)
   const skipRef = useRef(false)
 
@@ -31,10 +36,11 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
     channelRef.current.onmessage = (e) => {
       const d = e.data
       skipRef.current = true
-      if (d.elapsed !== undefined) setElapsed(d.elapsed)
+      if (d.base !== undefined) setBase(d.base)
+      if (d.startAt !== undefined) setStartAt(d.startAt)
       if (d.running !== undefined) setRunning(d.running)
       if (d.laps !== undefined) setLaps(d.laps)
-      if (d.reset) { setElapsed(0); setRunning(false); setLaps([]) }
+      if (d.reset) { setBase(0); setStartAt(0); setRunning(false); setLaps([]) }
       setTimeout(() => { skipRef.current = false }, 50)
     }
     return () => channelRef.current?.close()
@@ -45,23 +51,22 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('swElapsed', JSON.stringify(elapsed))
-  }, [elapsed])
-
-  useEffect(() => {
     localStorage.setItem('swLaps', JSON.stringify(laps))
   }, [laps])
 
   useEffect(() => {
+    localStorage.setItem('swElapsed', JSON.stringify(base))
+    localStorage.setItem('swStartAt', JSON.stringify(startAt))
     localStorage.setItem('swRunning', JSON.stringify(running))
-    broadcast({ running, elapsed })
-  }, [running, broadcast])
+    broadcast({ running, base, startAt })
+  }, [running, base, startAt, broadcast])
 
   // 외부 탭에서 localStorage 변경 시 동기화
   useEffect(() => {
     const handleStorage = (e) => {
       if (!e.key || !e.key.startsWith('sw')) return
-      if (e.key === 'swElapsed') setElapsed(JSON.parse(e.newValue || '0'))
+      if (e.key === 'swElapsed') setBase(JSON.parse(e.newValue || '0'))
+      if (e.key === 'swStartAt') setStartAt(JSON.parse(e.newValue || '0'))
       if (e.key === 'swRunning') setRunning(JSON.parse(e.newValue || 'false'))
       if (e.key === 'swLaps') setLaps(JSON.parse(e.newValue || '[]'))
     }
@@ -69,23 +74,34 @@ export default function Stopwatch({ accent, digital, zoom = 1 }) {
     return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
-  const tick = useCallback(() => {
-    setElapsed(prev => prev + 10)
-  }, [])
-
+  // 화면 갱신만 담당. 경과 시간은 항상 시작 시각과 현재 시각의 차이로 계산한다.
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(tick, 10)
+    if (!running) return
+    const loop = () => {
+      forceRender(n => n + 1)
+      rafRef.current = requestAnimationFrame(loop)
     }
-    return () => clearInterval(intervalRef.current)
-  }, [running, tick])
+    rafRef.current = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [running])
 
-  const handleStart = () => setRunning(true)
-  const handleStop = () => setRunning(false)
+  const elapsed = running && startAt > 0 ? base + (Date.now() - startAt) : base
+
+  const handleStart = () => {
+    setStartAt(Date.now())
+    setRunning(true)
+  }
+
+  const handleStop = () => {
+    setBase(elapsed)
+    setStartAt(0)
+    setRunning(false)
+  }
 
   const handleReset = () => {
     setRunning(false)
-    setElapsed(0)
+    setBase(0)
+    setStartAt(0)
     setLaps([])
     broadcast({ reset: true })
   }

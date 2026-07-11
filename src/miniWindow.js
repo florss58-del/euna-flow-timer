@@ -75,34 +75,40 @@ function buildTimer(pipWindow, container, pipWindowRef) {
   const toggleBtn = pipWindow.document.getElementById('toggleBtn')
   const resetBtn = pipWindow.document.getElementById('resetBtn')
 
-  let timeLeft = 0, running = false, started = false, interval = null
+  // timeLeft: 멈춰 있을 때의 남은 시간. deadline: 돌고 있을 때 0이 되는 시각(epoch ms)
+  let timeLeft = 0, deadline = 0, running = false, started = false
   let inputMin = 5, inputSec = 0
   const bc = new BroadcastChannel('timer-sync')
 
   const fmt = (ms) => {
-    const s = Math.floor(ms / 1000), m = Math.floor(s / 60)
+    const s = Math.ceil(ms / 1000), m = Math.floor(s / 60)
     return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
+  }
+
+  const remaining = () => running ? Math.max(0, deadline - Date.now()) : timeLeft
+
+  const save = () => {
+    localStorage.setItem('timerTimeLeft', JSON.stringify(timeLeft))
+    localStorage.setItem('timerDeadline', JSON.stringify(deadline))
+    localStorage.setItem('timerStarted', JSON.stringify(started))
+    localStorage.setItem('timerRunning', JSON.stringify(running))
   }
 
   const sync = () => {
     try {
       timeLeft = JSON.parse(localStorage.getItem('timerTimeLeft') || '0')
+      deadline = JSON.parse(localStorage.getItem('timerDeadline') || '0')
       started = JSON.parse(localStorage.getItem('timerStarted') || 'false')
       inputMin = JSON.parse(localStorage.getItem('timerInputMin') || '5')
       inputSec = JSON.parse(localStorage.getItem('timerInputSec') || '0')
-      const wasRunning = JSON.parse(localStorage.getItem('timerRunning') || 'false')
-      if (wasRunning && started && !running) {
-        running = true; interval = setInterval(tick, 10)
-      }
-      if (!wasRunning && running) {
-        running = false; clearInterval(interval)
-      }
+      running = JSON.parse(localStorage.getItem('timerRunning') || 'false') && deadline > Date.now()
     } catch {}
   }
 
   const render = () => {
-    display.textContent = fmt(started ? timeLeft : (inputMin * 60 + inputSec) * 1000)
-    if (running && started && timeLeft > 0 && timeLeft <= 15000) {
+    const rem = remaining()
+    display.textContent = fmt(started ? rem : (inputMin * 60 + inputSec) * 1000)
+    if (running && started && rem > 0 && rem <= 15000) {
       display.classList.add('blink')
     } else {
       display.classList.remove('blink')
@@ -112,48 +118,40 @@ function buildTimer(pipWindow, container, pipWindowRef) {
     else { toggleBtn.textContent = '시작'; toggleBtn.className = 'btn start' }
   }
 
-  const tick = () => {
-    if (timeLeft <= 10) {
-      running = false; started = false; timeLeft = 0
-      clearInterval(interval)
-      localStorage.setItem('timerTimeLeft', '0')
-      localStorage.setItem('timerStarted', 'false')
-      localStorage.setItem('timerRunning', 'false')
-      render(); return
-    }
-    timeLeft -= 10
-    localStorage.setItem('timerTimeLeft', JSON.stringify(timeLeft))
-    display.textContent = fmt(timeLeft)
-  }
-
   const bcSend = (data) => { try { bc.postMessage(data) } catch {} }
+
+  // 화면 갱신만 담당. 남은 시간은 항상 deadline과 현재 시각의 차이로 계산한다.
+  const interval = setInterval(() => {
+    if (running && remaining() <= 0) {
+      running = false; started = false; timeLeft = 0; deadline = 0
+      save()
+      bcSend({ running: false, started: false, timeLeft: 0, deadline: 0, inputMin, inputSec })
+    }
+    render()
+  }, 200)
 
   toggleBtn.addEventListener('click', () => {
     if (running) {
-      running = false; clearInterval(interval)
-      localStorage.setItem('timerRunning', 'false')
+      timeLeft = remaining()
+      deadline = 0
+      running = false
     } else {
-      if (!started) {
-        timeLeft = (inputMin * 60 + inputSec) * 1000
-        if (timeLeft <= 0) return
-        started = true
-        localStorage.setItem('timerStarted', 'true')
-      }
+      const bases = started ? timeLeft : (inputMin * 60 + inputSec) * 1000
+      if (bases <= 0) return
+      started = true
+      timeLeft = bases
+      deadline = Date.now() + bases
       running = true
-      interval = setInterval(tick, 10)
-      localStorage.setItem('timerRunning', 'true')
     }
-    bcSend({ running, started, timeLeft, inputMin, inputSec })
+    save()
+    bcSend({ running, started, timeLeft, deadline, inputMin, inputSec })
     render()
   })
 
   resetBtn.addEventListener('click', () => {
-    running = false; started = false; timeLeft = 0
-    clearInterval(interval)
-    localStorage.setItem('timerTimeLeft', '0')
-    localStorage.setItem('timerStarted', 'false')
-    localStorage.setItem('timerRunning', 'false')
-    bcSend({ running: false, started: false, timeLeft: 0, inputMin, inputSec })
+    running = false; started = false; timeLeft = 0; deadline = 0
+    save()
+    bcSend({ running: false, started: false, timeLeft: 0, deadline: 0, inputMin, inputSec })
     render()
   })
 
@@ -164,16 +162,11 @@ function buildTimer(pipWindow, container, pipWindowRef) {
   bc.onmessage = (e) => {
     const d = e.data
     if (d.timeLeft !== undefined) timeLeft = d.timeLeft
+    if (d.deadline !== undefined) deadline = d.deadline
     if (d.started !== undefined) started = d.started
+    if (d.running !== undefined) running = d.running
     if (d.inputMin !== undefined) inputMin = d.inputMin
     if (d.inputSec !== undefined) inputSec = d.inputSec
-    if (d.running !== undefined) {
-      if (d.running && !running) {
-        running = true; clearInterval(interval); interval = setInterval(tick, 10)
-      } else if (!d.running && running) {
-        running = false; clearInterval(interval)
-      }
-    }
     render()
   }
 
@@ -203,7 +196,8 @@ function buildStopwatch(pipWindow, container, pipWindowRef) {
   const resetBtn = pipWindow.document.getElementById('resetBtn')
   const lapBtn = pipWindow.document.getElementById('lapBtn')
 
-  let elapsed = 0, running = false, interval = null
+  // base: 지난 구간들의 누적 시간. startAt: 지금 구간이 시작된 시각(epoch ms)
+  let base = 0, startAt = 0, running = false
   const bc = new BroadcastChannel('stopwatch-sync')
 
   const fmt = (ms) => {
@@ -212,52 +206,56 @@ function buildStopwatch(pipWindow, container, pipWindowRef) {
     return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') + '.' + String(cs).padStart(2, '0')
   }
 
+  const elapsed = () => running && startAt > 0 ? base + (Date.now() - startAt) : base
+
+  const save = () => {
+    localStorage.setItem('swElapsed', JSON.stringify(base))
+    localStorage.setItem('swStartAt', JSON.stringify(startAt))
+    localStorage.setItem('swRunning', JSON.stringify(running))
+  }
+
   const sync = () => {
     try {
-      elapsed = JSON.parse(localStorage.getItem('swElapsed') || '0')
-      const wasRunning = JSON.parse(localStorage.getItem('swRunning') || 'false')
-      if (wasRunning && !running) {
-        running = true; interval = setInterval(tick, 10)
-      }
-      if (!wasRunning && running) {
-        running = false; clearInterval(interval)
-      }
+      base = JSON.parse(localStorage.getItem('swElapsed') || '0')
+      startAt = JSON.parse(localStorage.getItem('swStartAt') || '0')
+      running = JSON.parse(localStorage.getItem('swRunning') || 'false') && startAt > 0
     } catch {}
   }
 
   const render = () => {
-    display.textContent = fmt(elapsed)
+    display.textContent = fmt(elapsed())
     lapBtn.style.display = running ? '' : 'none'
     if (running) { toggleBtn.textContent = '정지'; toggleBtn.className = 'btn stop' }
     else { toggleBtn.textContent = '시작'; toggleBtn.className = 'btn start' }
   }
 
-  const tick = () => {
-    elapsed += 10
-    localStorage.setItem('swElapsed', JSON.stringify(elapsed))
-    display.textContent = fmt(elapsed)
-  }
-
   const bcSend = (data) => { try { bc.postMessage(data) } catch {} }
+
+  // 화면 갱신만 담당. 경과 시간은 항상 시작 시각과 현재 시각의 차이로 계산한다.
+  let raf = null
+  const loop = () => {
+    render()
+    raf = pipWindow.requestAnimationFrame(loop)
+  }
+  raf = pipWindow.requestAnimationFrame(loop)
 
   toggleBtn.addEventListener('click', () => {
     if (running) {
-      running = false; clearInterval(interval)
-      localStorage.setItem('swRunning', 'false')
+      base = elapsed()
+      startAt = 0
+      running = false
     } else {
+      startAt = Date.now()
       running = true
-      interval = setInterval(tick, 10)
-      localStorage.setItem('swRunning', 'true')
     }
-    bcSend({ running, elapsed })
+    save()
+    bcSend({ running, base, startAt })
     render()
   })
 
   resetBtn.addEventListener('click', () => {
-    running = false; elapsed = 0
-    clearInterval(interval)
-    localStorage.setItem('swElapsed', '0')
-    localStorage.setItem('swRunning', 'false')
+    running = false; base = 0; startAt = 0
+    save()
     localStorage.setItem('swLaps', '[]')
     bcSend({ reset: true })
     render()
@@ -266,7 +264,7 @@ function buildStopwatch(pipWindow, container, pipWindowRef) {
   lapBtn.addEventListener('click', () => {
     try {
       const laps = JSON.parse(localStorage.getItem('swLaps') || '[]')
-      laps.unshift(fmt(elapsed))
+      laps.unshift(fmt(elapsed()))
       localStorage.setItem('swLaps', JSON.stringify(laps))
       bcSend({ laps })
     } catch {}
@@ -278,20 +276,15 @@ function buildStopwatch(pipWindow, container, pipWindowRef) {
 
   bc.onmessage = (e) => {
     const d = e.data
-    if (d.elapsed !== undefined) elapsed = d.elapsed
-    if (d.running !== undefined) {
-      if (d.running && !running) {
-        running = true; clearInterval(interval); interval = setInterval(tick, 10)
-      } else if (!d.running && running) {
-        running = false; clearInterval(interval)
-      }
-    }
-    if (d.reset) { running = false; elapsed = 0; clearInterval(interval) }
+    if (d.base !== undefined) base = d.base
+    if (d.startAt !== undefined) startAt = d.startAt
+    if (d.running !== undefined) running = d.running
+    if (d.reset) { running = false; base = 0; startAt = 0 }
     render()
   }
 
   pipWindow.addEventListener('pagehide', () => {
-    clearInterval(interval); bc.close(); pipWindowRef.current = null
+    pipWindow.cancelAnimationFrame(raf); bc.close(); pipWindowRef.current = null
   })
 
   sync(); render()

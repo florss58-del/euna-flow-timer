@@ -10,7 +10,7 @@ function loadState(key, fallback) {
 }
 
 function formatDisplay(ms) {
-  const totalSeconds = Math.floor(ms / 1000)
+  const totalSeconds = Math.ceil(ms / 1000)
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
@@ -19,13 +19,17 @@ function formatDisplay(ms) {
 export default function Timer({ accent, digital, zoom = 1 }) {
   const [inputMin, setInputMin] = useState(() => loadState('timerInputMin', 5))
   const [inputSec, setInputSec] = useState(() => loadState('timerInputSec', 0))
+  // timeLeft: 멈춰 있을 때의 남은 시간. deadline: 돌고 있을 때 0이 되는 시각(epoch ms)
   const [timeLeft, setTimeLeft] = useState(() => loadState('timerTimeLeft', 0))
-  const [running, setRunning] = useState(false)
+  const [deadline, setDeadline] = useState(() => loadState('timerDeadline', 0))
   const [started, setStarted] = useState(() => loadState('timerStarted', false))
+  const [running, setRunning] = useState(() =>
+    loadState('timerRunning', false) && loadState('timerDeadline', 0) > Date.now()
+  )
   const [editOpen, setEditOpen] = useState(false)
   const [editMin, setEditMin] = useState(5)
   const [editSec, setEditSec] = useState(0)
-  const intervalRef = useRef(null)
+  const [, forceRender] = useState(0)
   const channelRef = useRef(null)
   const skipRef = useRef(false)
 
@@ -36,6 +40,7 @@ export default function Timer({ accent, digital, zoom = 1 }) {
       const d = e.data
       skipRef.current = true
       if (d.timeLeft !== undefined) setTimeLeft(d.timeLeft)
+      if (d.deadline !== undefined) setDeadline(d.deadline)
       if (d.started !== undefined) {
         setStarted(d.started)
         if (!d.started) setRunning(false)
@@ -59,19 +64,18 @@ export default function Timer({ accent, digital, zoom = 1 }) {
 
   useEffect(() => {
     localStorage.setItem('timerTimeLeft', JSON.stringify(timeLeft))
+    localStorage.setItem('timerDeadline', JSON.stringify(deadline))
     localStorage.setItem('timerStarted', JSON.stringify(started))
-  }, [timeLeft, started])
-
-  useEffect(() => {
     localStorage.setItem('timerRunning', JSON.stringify(running))
-    broadcast({ running, started, timeLeft, inputMin, inputSec })
-  }, [running, broadcast])
+    broadcast({ running, started, timeLeft, deadline, inputMin, inputSec })
+  }, [running, started, timeLeft, deadline, inputMin, inputSec, broadcast])
 
   // 외부 탭에서 localStorage 변경 시 동기화
   useEffect(() => {
     const handleStorage = (e) => {
       if (!e.key || !e.key.startsWith('timer')) return
       if (e.key === 'timerTimeLeft') setTimeLeft(JSON.parse(e.newValue || '0'))
+      if (e.key === 'timerDeadline') setDeadline(JSON.parse(e.newValue || '0'))
       if (e.key === 'timerStarted') {
         const v = JSON.parse(e.newValue || 'false')
         setStarted(v)
@@ -117,41 +121,51 @@ export default function Timer({ accent, digital, zoom = 1 }) {
     } catch {}
   }, [])
 
-  const tick = useCallback(() => {
-    setTimeLeft(prev => {
-      if (prev <= 10) {
-        setRunning(false)
-        setStarted(false)
-        playAlarm()
-        return 0
-      }
-      return prev - 10
-    })
-  }, [playAlarm])
+  // 화면 갱신만 담당. 남은 시간은 항상 deadline과 현재 시각의 차이로 계산한다.
+  // 탭이 백그라운드로 가면 브라우저가 타이머를 늦추지만, 벽시계 기준이라 값은 어긋나지 않는다.
+  useEffect(() => {
+    if (!running) return
+    const bump = () => forceRender(n => n + 1)
+    const id = setInterval(bump, 200)
+    document.addEventListener('visibilitychange', bump)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', bump)
+    }
+  }, [running])
+
+  const remainingMs = running ? Math.max(0, deadline - Date.now()) : timeLeft
 
   useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(tick, 10)
+    if (running && remainingMs <= 0) {
+      setRunning(false)
+      setStarted(false)
+      setTimeLeft(0)
+      setDeadline(0)
+      playAlarm()
     }
-    return () => clearInterval(intervalRef.current)
-  }, [running, tick])
+  }, [running, remainingMs, playAlarm])
 
   const handleStart = () => {
-    if (!started) {
-      const total = (inputMin * 60 + inputSec) * 1000
-      if (total <= 0) return
-      setTimeLeft(total)
-      setStarted(true)
-    }
+    const base = started ? timeLeft : (inputMin * 60 + inputSec) * 1000
+    if (base <= 0) return
+    setStarted(true)
+    setTimeLeft(base)
+    setDeadline(Date.now() + base)
     setRunning(true)
   }
 
-  const handlePause = () => setRunning(false)
+  const handlePause = () => {
+    setTimeLeft(Math.max(0, deadline - Date.now()))
+    setDeadline(0)
+    setRunning(false)
+  }
 
   const handleReset = () => {
     setRunning(false)
     setStarted(false)
     setTimeLeft(0)
+    setDeadline(0)
   }
 
   const openEdit = () => {
@@ -163,16 +177,15 @@ export default function Timer({ accent, digital, zoom = 1 }) {
   const confirmEdit = () => {
     setInputMin(editMin)
     setInputSec(editSec)
-    if (started) {
-      setTimeLeft((editMin * 60 + editSec) * 1000)
-    }
     setRunning(false)
     setStarted(false)
+    setTimeLeft(0)
+    setDeadline(0)
     setEditOpen(false)
   }
 
-  const displayMs = started ? timeLeft : (inputMin * 60 + inputSec) * 1000
-  const isWarning = started && running && timeLeft > 0 && timeLeft <= 15000
+  const displayMs = started ? remainingMs : (inputMin * 60 + inputSec) * 1000
+  const isWarning = started && running && remainingMs > 0 && remainingMs <= 15000
 
   return (
     <div className="timer-page">
