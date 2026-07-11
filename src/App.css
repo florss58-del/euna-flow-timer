@@ -495,8 +495,8 @@ body {
 }
 
 .big-time.digital {
-  font-family: 'Courier New', 'Consolas', monospace;
-  letter-spacing: 6px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  letter-spacing: 4px;
 }
 
 .big-time.normal {
@@ -580,8 +580,8 @@ body {
 }
 
 .timer-display.digital {
-  font-family: 'Courier New', 'Consolas', monospace;
-  letter-spacing: 6px;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
+  letter-spacing: 4px;
 }
 
 .timer-display.normal {
@@ -652,7 +652,7 @@ body {
   font-size: 32px;
   text-align: center;
   outline: none;
-  font-family: 'Courier New', monospace;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
 }
 
 .timer-modal-input:focus {
