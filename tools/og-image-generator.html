@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+// 이 파일을 브라우저에서 열면 og-image.png를 다운로드할 수 있습니다
+const canvas = document.createElement('canvas');
+canvas.width = 1200;
+canvas.height = 630;
+const ctx = canvas.getContext('2d');
+
+// 배경
+ctx.fillStyle = '#1a1a2e';
+ctx.fillRect(0, 0, 1200, 630);
+
+// 브랜드
+ctx.fillStyle = '#ffffff';
+ctx.font = '800 48px sans-serif';
+ctx.textAlign = 'center';
+ctx.fillText('Euna Flow', 600, 180);
+
+// 서브
+ctx.fillStyle = 'rgba(255,255,255,0.6)';
+ctx.font = '400 22px sans-serif';
+ctx.fillText('집중의 시간', 600, 220);
+
+// 시간
+ctx.fillStyle = '#e0e0e0';
+ctx.font = '700 130px Courier New, monospace';
+ctx.fillText('05:00', 600, 390);
+
+// 파란 바
+ctx.fillStyle = '#3b82f6';
+ctx.beginPath();
+ctx.roundRect(400, 415, 400, 6, 3);
+ctx.fill();
+
+// 하단 기능 태그
+const tags = ['⏱ 타이머', '🏁 스톱워치', '⏰ 자명종', '🕐 시계'];
+const tagWidth = 140;
+const startX = 600 - (tags.length * (tagWidth + 16)) / 2 + 8;
+ctx.font = '600 16px sans-serif';
+tags.forEach((tag, i) => {
+  const x = startX + i * (tagWidth + 16);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.roundRect(x, 470, tagWidth, 44, 12);
+  ctx.fill();
+  ctx.fillStyle = '#aaaaaa';
+  ctx.textAlign = 'center';
+  ctx.fillText(tag, x + tagWidth/2, 498);
+});
+
+// 다운로드
+document.body.style.background = '#000';
+document.body.style.display = 'flex';
+document.body.style.justifyContent = 'center';
+document.body.style.alignItems = 'center';
+document.body.style.height = '100vh';
+document.body.style.flexDirection = 'column';
+document.body.style.gap = '20px';
+document.body.appendChild(canvas);
+canvas.style.maxWidth = '100%';
+
+const link = document.createElement('a');
+link.download = 'og-image.png';
+link.href = canvas.toDataURL('image/png');
+link.textContent = '📥 og-image.png 다운로드';
+link.style.color = '#3b82f6';
+link.style.fontSize = '20px';
+document.body.appendChild(link);
+
+// 자동 다운로드
+link.click();
+</script>
+</head>
+<body></body>
+</html>

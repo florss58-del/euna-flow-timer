@@ -134,6 +134,31 @@ export default function Timer({ accent, digital, zoom = 1 }) {
     }
   }, [running])
 
+  // 타이머가 도는 동안 화면이 꺼지지 않게 한다. 수업 중 노트북이 잠들면 시간이 안 보인다.
+  useEffect(() => {
+    if (!running || !navigator.wakeLock) return
+    let lock = null
+    let cancelled = false
+    const acquire = async () => {
+      try {
+        const next = await navigator.wakeLock.request('screen')
+        if (cancelled) next.release().catch(() => {})
+        else lock = next
+      } catch {}
+    }
+    acquire()
+    // 다른 탭에 갔다 오면 잠금이 풀려 있으므로 다시 잡는다
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') acquire()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
+      lock?.release().catch(() => {})
+    }
+  }, [running])
+
   const remainingMs = running ? Math.max(0, deadline - Date.now()) : timeLeft
 
   useEffect(() => {
@@ -174,6 +199,15 @@ export default function Timer({ accent, digital, zoom = 1 }) {
     setEditOpen(true)
   }
 
+  const applyPreset = (min) => {
+    setInputMin(min)
+    setInputSec(0)
+    setRunning(false)
+    setStarted(false)
+    setTimeLeft(0)
+    setDeadline(0)
+  }
+
   const confirmEdit = () => {
     setInputMin(editMin)
     setInputSec(editSec)
@@ -195,6 +229,17 @@ export default function Timer({ accent, digital, zoom = 1 }) {
         style={{ fontSize: `calc(clamp(80px, 18vw, 160px) * ${zoom})` }}
       >
         {formatDisplay(displayMs)}
+      </div>
+      <div className="preset-row">
+        {[1, 3, 5, 10].map(min => (
+          <button
+            key={min}
+            className={`preset-btn${!started && inputMin === min && inputSec === 0 ? ' active' : ''}`}
+            onClick={() => applyPreset(min)}
+          >
+            {min}분
+          </button>
+        ))}
       </div>
       <div className="btn-row">
         <button className="action-btn" style={{background:'#2dd4bf',color:'#fff'}} onClick={openEdit}>타이머 수정</button>

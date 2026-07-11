@@ -33,6 +33,8 @@ const ZOOM_MIN = 0.5
 const ZOOM_MAX = 2.0
 const ZOOM_STEP = 0.15
 
+const BASE_TITLE = 'Euna Flow - 집중의 시간'
+
 function loadState(key, fallback) {
   try {
     const saved = localStorage.getItem(key)
@@ -42,12 +44,99 @@ function loadState(key, fallback) {
   }
 }
 
+// hhmm 알람이 prevMs와 nowMs 사이에 지나갔는지. 배경 탭에서 검사가 늦어져도 놓치지 않는다.
+// 다만 1분 넘게 지난 알람은 울리지 않는다. 뒤늦게 울리는 알람은 쓸모가 없다.
+function alarmPassed(hhmm, prevMs, nowMs) {
+  const [h, m] = hhmm.split(':').map(Number)
+  const d = new Date(nowMs)
+  d.setHours(h, m, 0, 0)
+  let t = d.getTime()
+  if (t > nowMs) t -= 24 * 60 * 60 * 1000
+  return t > prevMs && t <= nowMs && nowMs - t < 60000
+}
+
+function playAlarmSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const beep = (time, freq, dur, type = 'square') => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = freq
+      osc.type = type
+      gain.gain.setValueAtTime(1.0, time)
+      gain.gain.setValueAtTime(1.0, time + dur * 0.7)
+      gain.gain.exponentialRampToValueAtTime(0.01, time + dur)
+      osc.start(time)
+      osc.stop(time + dur)
+    }
+    const t = ctx.currentTime
+    beep(t, 1200, 0.15); beep(t + 0.2, 1200, 0.15); beep(t + 0.4, 1500, 0.25)
+    beep(t + 0.8, 1200, 0.15); beep(t + 1.0, 1200, 0.15); beep(t + 1.2, 1500, 0.25)
+    beep(t + 1.6, 1200, 0.15); beep(t + 1.8, 1200, 0.15); beep(t + 2.0, 1800, 0.5, 'sawtooth')
+  } catch {}
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState(() => loadState('activeTab', 'timer'))
   const [settings, setSettings] = useState(() => loadState('settings', defaultSettings))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [zooms, setZooms] = useState(() => loadState('displayZooms', { alarm: 1, timer: 1, stopwatch: 1, clock: 1 }))
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [ringing, setRinging] = useState(null)
+  const lastCheckRef = useRef(Date.now())
+  const ringLoopRef = useRef(null)
+
+  // 자명종 감시는 앱 전체에서 돈다. 예전에는 자명종 탭에 있을 때만 검사해서
+  // 다른 탭을 보고 있으면 알람이 그냥 지나갔다.
+  useEffect(() => {
+    const check = () => {
+      const nowMs = Date.now()
+      const prevMs = lastCheckRef.current
+      lastCheckRef.current = nowMs
+      if (ringing) return
+
+      const alarms = loadState('alarms', [])
+      const hit = alarms.find(a => a.enabled && alarmPassed(a.time, prevMs, nowMs))
+      if (hit) {
+        setRinging(hit.time)
+        playAlarmSound()
+        ringLoopRef.current = setInterval(playAlarmSound, 3000)
+      }
+    }
+    const id = setInterval(check, 1000)
+    document.addEventListener('visibilitychange', check)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', check)
+    }
+  }, [ringing])
+
+  const dismissAlarm = () => {
+    clearInterval(ringLoopRef.current)
+    setRinging(null)
+  }
+
+  // 브라우저 탭 제목에 남은 시간. 다른 탭에 가 있어도 제목만 보고 확인한다.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const running = loadState('timerRunning', false)
+      const deadline = loadState('timerDeadline', 0)
+      if (running && deadline > Date.now()) {
+        const s = Math.ceil((deadline - Date.now()) / 1000)
+        const mm = String(Math.floor(s / 60)).padStart(2, '0')
+        const ss = String(s % 60).padStart(2, '0')
+        document.title = `${mm}:${ss} · ${BASE_TITLE}`
+      } else if (document.title !== BASE_TITLE) {
+        document.title = BASE_TITLE
+      }
+    }, 1000)
+    return () => {
+      clearInterval(id)
+      document.title = BASE_TITLE
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('activeTab', JSON.stringify(activeTab))
@@ -120,6 +209,17 @@ export default function App() {
     { id: 'clock', label: '시계', icon: '🕐' },
   ]
 
+  const alarmPopup = ringing && (
+    <>
+      <div className="alarm-overlay" onClick={dismissAlarm} />
+      <div className="alarm-notification">
+        <h2>알람</h2>
+        <p>{ringing}</p>
+        <button className="action-btn primary" onClick={dismissAlarm}>끄기</button>
+      </div>
+    </>
+  )
+
   if (isFullscreen) {
     return (
       <div className={`app-fullscreen${light ? ' light' : ''}`} style={style}>
@@ -143,6 +243,7 @@ export default function App() {
           {activeTab === 'alarm' && <Alarm accent={accent} zoom={zoom} />}
           {activeTab === 'clock' && <Clock settings={settings} accent={accent} zoom={zoom} />}
         </div>
+        {alarmPopup}
       </div>
     )
   }
@@ -222,6 +323,7 @@ export default function App() {
         <span className="footer-sep">·</span>
         <span>AI Learning Tools for Education</span>
       </footer>
+      {alarmPopup}
       {settingsOpen && <div className="settings-overlay" onClick={() => setSettingsOpen(false)} />}
       <Settings
         open={settingsOpen}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 function loadState(key, fallback) {
   try {
@@ -9,56 +9,14 @@ function loadState(key, fallback) {
   }
 }
 
+// 알람이 울리는지 감시하는 일은 App이 맡는다. 여기는 목록을 보여주고 고치는 화면만 담당한다.
+// 감시가 이 컴포넌트에 있으면 다른 탭으로 옮긴 순간 검사가 멈춘다.
 export default function Alarm({ accent, zoom = 1 }) {
   const [alarms, setAlarms] = useState(() => loadState('alarms', []))
   const [newTime, setNewTime] = useState('07:00')
-  const [ringing, setRinging] = useState(null)
-  const checkedRef = useRef(new Set())
-  const alarmIntervalRef = useRef(null)
-
-  const playAlarmSound = useCallback(() => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)()
-      const beep = (time, freq, dur, type = 'square') => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.frequency.value = freq
-        osc.type = type
-        gain.gain.setValueAtTime(1.0, time)
-        gain.gain.setValueAtTime(1.0, time + dur * 0.7)
-        gain.gain.exponentialRampToValueAtTime(0.01, time + dur)
-        osc.start(time)
-        osc.stop(time + dur)
-      }
-      const t = ctx.currentTime
-      beep(t, 1200, 0.15); beep(t+0.2, 1200, 0.15); beep(t+0.4, 1500, 0.25)
-      beep(t+0.8, 1200, 0.15); beep(t+1.0, 1200, 0.15); beep(t+1.2, 1500, 0.25)
-      beep(t+1.6, 1200, 0.15); beep(t+1.8, 1200, 0.15); beep(t+2.0, 1800, 0.5, 'sawtooth')
-    } catch {}
-  }, [])
 
   useEffect(() => {
     localStorage.setItem('alarms', JSON.stringify(alarms))
-  }, [alarms])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date()
-      const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-      const key = `${hhmm}-${now.getDate()}`
-
-      alarms.forEach(alarm => {
-        if (alarm.enabled && alarm.time === hhmm && !checkedRef.current.has(`${alarm.time}-${key}`)) {
-          checkedRef.current.add(`${alarm.time}-${key}`)
-          setRinging(alarm.time)
-          playAlarmSound()
-          alarmIntervalRef.current = setInterval(playAlarmSound, 3000)
-        }
-      })
-    }, 1000)
-    return () => clearInterval(interval)
   }, [alarms])
 
   const addAlarm = () => {
@@ -72,11 +30,6 @@ export default function Alarm({ accent, zoom = 1 }) {
 
   const deleteAlarm = (index) => {
     setAlarms(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const dismissAlarm = () => {
-    setRinging(null)
-    clearInterval(alarmIntervalRef.current)
   }
 
   const zoomStyle = { transform: `scale(${zoom})`, transformOrigin: 'top center' }
@@ -109,17 +62,6 @@ export default function Alarm({ accent, zoom = 1 }) {
           </div>
         ))}
       </div>
-
-      {ringing && (
-        <>
-          <div className="alarm-overlay" onClick={dismissAlarm} />
-          <div className="alarm-notification">
-            <h2>알람</h2>
-            <p>{ringing}</p>
-            <button className="action-btn primary" onClick={dismissAlarm}>끄기</button>
-          </div>
-        </>
-      )}
     </div>
   )
 }
