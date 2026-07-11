@@ -215,6 +215,13 @@ export default function App() {
         </div>
       </div>
       </div>
+      <footer className="footer">
+        <a className="footer-link" href="https://duon.ai.kr/tools.html">← 수업 도구</a>
+        <span className="footer-sep">·</span>
+        <span>© 2026 EUNACLASS</span>
+        <span className="footer-sep">·</span>
+        <span>AI Learning Tools for Education</span>
+      </footer>
       {settingsOpen && <div className="settings-overlay" onClick={() => setSettingsOpen(false)} />}
       <Settings
         open={settingsOpen}

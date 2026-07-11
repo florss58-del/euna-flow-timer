@@ -972,3 +972,39 @@ body {
   background: rgba(0,0,0,0.6);
   z-index: 199;
 }
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.footer-link {
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-link:hover {
+  color: var(--accent-color);
+}
+
+.footer-sep {
+  opacity: 0.4;
+}
+
+.app.light .footer {
+  color: rgba(0,0,0,0.4);
+  border-top-color: rgba(0,0,0,0.08);
+}
+
+.app.light .footer-link {
+  color: rgba(0,0,0,0.6);
+}
