@@ -1,10 +1,14 @@
 # Euna Flow 타이머 — 현재 상태
 
-최종 갱신: 2026-07-11
+최종 갱신: 2026-07-12 (브랜드 통일 — 라인 아이콘 + 퍼플)
 
 ## 한 줄 요약
 
-Vite + React로 만든 시계·타이머 웹앱 "Euna Flow". 기능은 완성 상태이고 프로덕션은 https://timer.duon.ai.kr 에서 서비스 중이다.
+Vite + React로 만든 시계·타이머 웹앱 “Euna Flow”. 기능은 완성 상태이고 프로덕션은 https://timer.duon.ai.kr 에서 서비스 중이다.
+
+2026-07-12에 EUNACLASS 본사이트와 **시각 언어를 통일**했다. 사이드바 이모지를 라인 아이콘으로 바꾸고, 강조색을 브랜드 퍼플(#af88ff)로 맞췄다. 기능·배치는 건드리지 않았다.
+
+EUNACLASS 홈·도구 페이지의 타이머 카드에서 이 사이트로 연결된다(2026-07-12 홈 카드 LIVE 반영).
 
 ## 배포 구조 (2026-07-11 확인)
 
@@ -15,7 +19,7 @@ Vite + React로 만든 시계·타이머 웹앱 "Euna Flow". 기능은 완성 �
 | Vercel 프로젝트 | `euna-flow-timer-w8j9` (커스텀 도메인 보유) |
 | GitHub 저장소 | https://github.com/florss58-del/euna-flow-timer (master) |
 | 배포 방식 | master push 시 Vercel 자동 배포 |
-| 현재 배포 커밋 | `56f8ca4` Security: hash passcode + block DevTools access |
+| 현재 배포 커밋 | `8e1810c` 브랜드 통일: 사이드바 이모지 → 라인 아이콘, 강조색 → 퍼플 |
 
 ### 해결됨 — Vercel 프로젝트 중복 (2026-07-11 정리)
 
