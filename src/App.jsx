@@ -6,7 +6,10 @@ import Clock from './components/Clock'
 import Settings from './components/Settings'
 import { buildMiniContent, TAB_SIZES } from './miniWindow'
 
+// EUNACLASS 브랜드 색을 기본으로. purple/teal은 본사이트(css/common.css)의 --color-primary·--color-tertiary와 같은 값.
 const COLORS = {
+  purple: '#af88ff',
+  teal: '#5ae4d0',
   gray: '#6b7280',
   orange: '#f97316',
   red: '#ef4444',
@@ -21,12 +24,59 @@ const ThemeIcon = () => (
   </svg>
 )
 
+// ── 사이드바 라인 아이콘 ──
+// EUNACLASS 본사이트(js/icons.js)와 같은 규격: 24x24, stroke=currentColor, 굵기 1.75, 둥근 끝단.
+// 색은 CSS가 정한다(currentColor). 이모지를 쓰지 않는다.
+const LineIcon = ({ children }) => (
+  <svg
+    width="22" height="22" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="1.75"
+    strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true" focusable="false"
+  >
+    {children}
+  </svg>
+)
+
+const AlarmIcon = () => (
+  <LineIcon>
+    <circle cx="12" cy="13" r="8" />
+    <path d="M12 9v4l2 2" />
+    <path d="M5 3 2 6" />
+    <path d="m19 3 3 3" />
+  </LineIcon>
+)
+
+const TimerIcon = () => (
+  <LineIcon>
+    <path d="M10 2h4" />
+    <path d="M12 14l3-3" />
+    <circle cx="12" cy="14" r="8" />
+  </LineIcon>
+)
+
+const StopwatchIcon = () => (
+  <LineIcon>
+    <path d="M10 2h4" />
+    <path d="M12 8v6" />
+    <path d="M18.4 7.6 19.8 6.2" />
+    <circle cx="12" cy="14" r="8" />
+  </LineIcon>
+)
+
+const ClockIcon = () => (
+  <LineIcon>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </LineIcon>
+)
+
 const defaultSettings = {
   digitalDisplay: true,
   use12Hour: false,
   showDate: true,
   lightMode: false,
-  accentColor: 'blue',
+  accentColor: 'purple',
 }
 
 const ZOOM_MIN = 0.5
@@ -197,16 +247,16 @@ export default function App() {
     buildMiniContent(popup, activeTab, pipWindowRef)
   }, [activeTab])
 
-  const accent = COLORS[settings.accentColor] || COLORS.blue
+  const accent = COLORS[settings.accentColor] || COLORS.purple
   const light = settings.lightMode
   const zoom = zooms[activeTab] || 1
   const style = { '--accent-color': accent, '--display-zoom': zoom }
 
   const tabs = [
-    { id: 'alarm', label: '자명종', icon: '⏰' },
-    { id: 'timer', label: '타이머', icon: '⏱' },
-    { id: 'stopwatch', label: '스톱워치', icon: '🏁' },
-    { id: 'clock', label: '시계', icon: '🕐' },
+    { id: 'alarm', label: '자명종', icon: <AlarmIcon /> },
+    { id: 'timer', label: '타이머', icon: <TimerIcon /> },
+    { id: 'stopwatch', label: '스톱워치', icon: <StopwatchIcon /> },
+    { id: 'clock', label: '시계', icon: <ClockIcon /> },
   ]
 
   const alarmPopup = ringing && (

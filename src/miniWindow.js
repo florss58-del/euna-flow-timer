@@ -16,7 +16,7 @@ const COMMON_CSS = `
   cursor:pointer;color:#fff;transition:opacity 0.2s;letter-spacing:1px}
   .btn:hover{opacity:0.85}
   .start{background:#22c55e}.pause{background:#f97316}.reset{background:#d4a853}
-  .stop{background:#ef4444}.lap{background:#3b82f6}
+  .stop{background:#ef4444}.lap{background:#af88ff}
   .blink{animation:blink .8s ease-in-out infinite}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
   .brand{position:absolute;top:8px;left:12px;display:flex;align-items:baseline;gap:6px}

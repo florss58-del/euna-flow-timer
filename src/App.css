@@ -70,7 +70,7 @@ body {
 }
 
 .app.light .timer-display {
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   text-shadow: none;
 }
 
@@ -194,7 +194,7 @@ body {
 }
 
 .sidebar-btn.active {
-  background: var(--accent-color, #3b82f6);
+  background: var(--accent-color, #af88ff);
   color: #fff;
 }
 
@@ -214,7 +214,7 @@ body {
 /* Header (full width top bar) */
 .header {
   height: 64px;
-  background: var(--accent-color, #3b82f6);
+  background: var(--accent-color, #af88ff);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -486,7 +486,7 @@ body {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 2px;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   text-shadow: 0 0 30px rgba(59,130,246,0.3);
   margin-bottom: 16px;
   margin-bottom: 40px;
@@ -522,7 +522,7 @@ body {
 }
 
 .action-btn.primary {
-  background: var(--accent-color, #3b82f6);
+  background: var(--accent-color, #af88ff);
   color: #fff;
 }
 
@@ -562,7 +562,7 @@ body {
 .timer-title {
   font-size: 28px;
   font-weight: 700;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   opacity: 0.7;
   letter-spacing: 4px;
   margin-bottom: 20px;
@@ -571,7 +571,7 @@ body {
 .timer-display {
   font-size: clamp(80px, 18vw, 160px);
   font-weight: 700;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   line-height: 1;
   margin-bottom: 32px;
   user-select: none;
@@ -656,7 +656,7 @@ body {
 }
 
 .timer-modal-input:focus {
-  border-color: #3b82f6;
+  border-color: #af88ff;
 }
 
 .timer-modal-label {
@@ -694,7 +694,7 @@ body {
 .alarm-time-display {
   font-size: 32px;
   font-weight: 600;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
 }
 
 .alarm-toggle {
@@ -709,7 +709,7 @@ body {
 }
 
 .alarm-toggle.on {
-  background: var(--accent-color, #3b82f6);
+  background: var(--accent-color, #af88ff);
 }
 
 .alarm-toggle::after {
@@ -746,7 +746,7 @@ body {
 }
 
 .alarm-time-input:focus {
-  border-color: var(--accent-color, #3b82f6);
+  border-color: var(--accent-color, #af88ff);
 }
 
 .alarm-delete-btn {
@@ -785,7 +785,7 @@ body {
 /* Clock */
 .clock-label {
   font-size: 20px;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   opacity: 0.6;
   letter-spacing: 4px;
   margin-bottom: 10px;
@@ -800,14 +800,14 @@ body {
 
 .clock-date {
   font-size: 20px;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   opacity: 0.7;
   margin-top: 14px;
 }
 
 .clock-ampm {
   font-size: 28px;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   opacity: 0.7;
 }
 
@@ -877,7 +877,7 @@ body {
 }
 
 .toggle.on {
-  background: var(--accent-color, #3b82f6);
+  background: var(--accent-color, #af88ff);
 }
 
 .toggle::after {
@@ -941,7 +941,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   background: #2d2d3f;
-  border: 2px solid var(--accent-color, #3b82f6);
+  border: 2px solid var(--accent-color, #af88ff);
   border-radius: 20px;
   padding: 40px;
   text-align: center;
@@ -962,7 +962,7 @@ body {
 .alarm-notification p {
   font-size: 48px;
   font-weight: 700;
-  color: var(--accent-color, #3b82f6);
+  color: var(--accent-color, #af88ff);
   margin-bottom: 20px;
 }
 
