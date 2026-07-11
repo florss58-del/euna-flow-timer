@@ -981,13 +981,14 @@ body {
   gap: 8px;
   flex-wrap: wrap;
   padding: 10px 16px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.35);
+  font-size: 13px;
+  /* 대비 5.96:1 - 작은 글씨 기준 4.5:1 충족 */
+  color: rgba(255,255,255,0.55);
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .footer-link {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
   transition: color 0.15s;
 }
@@ -997,14 +998,15 @@ body {
 }
 
 .footer-sep {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .app.light .footer {
-  color: rgba(0,0,0,0.4);
+  /* 대비 6.04:1 */
+  color: rgba(0,0,0,0.62);
   border-top-color: rgba(0,0,0,0.08);
 }
 
 .app.light .footer-link {
-  color: rgba(0,0,0,0.6);
+  color: rgba(0,0,0,0.8);
 }
